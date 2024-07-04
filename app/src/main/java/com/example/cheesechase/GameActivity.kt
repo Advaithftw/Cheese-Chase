@@ -8,6 +8,10 @@ import android.view.WindowManager
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import kotlin.math.absoluteValue
 import kotlin.random.Random
 
 class GameActivity(private val context: Context) {
@@ -33,12 +37,8 @@ class GameActivity(private val context: Context) {
         }
     }
 
-
-
-
     private fun endGame() {
         updateHighScore()
-
         gameover.value = true
     }
 
@@ -53,7 +53,7 @@ class GameActivity(private val context: Context) {
         mp2 = MediaPlayer.create(context, R.raw.over)
         mp3 = MediaPlayer.create(context, R.raw.game)
         mp4 = MediaPlayer.create(context, R.raw.coin)
-        mp5 = MediaPlayer.create(context,R.raw.shoot)
+        mp5 = MediaPlayer.create(context, R.raw.shoot)
     }
 
     val jerryX = mutableStateOf(1)
@@ -70,6 +70,7 @@ class GameActivity(private val context: Context) {
     val random = Random
     val coincount = mutableStateOf(0)
     val bulletcount = mutableStateOf(0)
+    val hascollided = mutableStateOf(false)
 
     private val lanes = 3
     private val collisionlimit = 10
@@ -83,10 +84,33 @@ class GameActivity(private val context: Context) {
     var obstaclegenerationJob: Job? = null
     var coingenerationJob: Job? = null
     var cheesegenerationJob: Job? = null
-    var HP = mutableStateOf(100)
-    var hascollided = mutableStateOf(false)
+
+    var retrofit = ApiClient.getInstance()?.create(APIInterface::class.java)
+    var live = mutableStateOf(1)
+    var initialLive = live.value
 
     init {
+        fetchObstacleLimit()
+    }
+
+    private fun fetchObstacleLimit() {
+        retrofit?.getObstacleLimit()?.enqueue(object : Callback<obstacleLimit> {
+            override fun onResponse(call: Call<obstacleLimit>, response: Response<obstacleLimit>) {
+                if (response.isSuccessful) {
+                    val obstacleLimit = response.body()?.obstacleLimit ?: 0
+                    live.value = obstacleLimit
+                    initialLive = obstacleLimit
+                    setupGame()
+                }
+            }
+
+            override fun onFailure(call: Call<obstacleLimit>, t: Throwable) {
+
+            }
+        })
+    }
+
+    private fun setupGame() {
         val screenHeight = getScreenHeight(context)
         jerryY.value = screenHeight / 2
         tomY.value = jerryY.value + lanewidth * 2
@@ -116,12 +140,12 @@ class GameActivity(private val context: Context) {
                     obstacle.y >= jerryY.value - collisionlimit &&
                     obstacle.y <= jerryY.value + collisionlimit) {
                     if (!hascollided.value) {
-                        HP.value-=50
+                        live.value -= 1
                         obstacles.removeAt(i)
                         hascollided.value = true
                         playBuzzSound()
 
-                        if (HP.value == 0) {
+                        if (live.value == 0) {
                             playOverSound()
                             endGame()
                         } else {
@@ -133,10 +157,8 @@ class GameActivity(private val context: Context) {
                 if (obstacle.x == tomX.value &&
                     obstacle.y >= tomY.value - collisionlimit &&
                     obstacle.y <= tomY.value + collisionlimit) {
-
                     obstacles.removeAt(i)
                     playBuzzSound()
-
                 }
 
                 if (obstacle.y > jerryY.value) {
@@ -147,7 +169,6 @@ class GameActivity(private val context: Context) {
 
                 if (obstacle.y > getScreenHeight(context)) {
                     obstacles.removeAt(i)
-
                 }
             }
 
@@ -161,9 +182,10 @@ class GameActivity(private val context: Context) {
                     playCheeseSound()
                     bulletcount.value++
                     cheeses.removeAt(i)
-                    HP.value+=10
+                    if (live.value < initialLive) {
+                        live.value++
+                    }
                 }
-
 
                 if (cheese.y > getScreenHeight(context)) {
                     cheeses.removeAt(i)
@@ -204,8 +226,7 @@ class GameActivity(private val context: Context) {
                 }
             }
 
-
-            if (HP.value <= 0) {
+            if (live.value <= 0) {
                 endGame()
             }
 
@@ -222,8 +243,6 @@ class GameActivity(private val context: Context) {
         mp2?.start()
     }
 
-
-
     private fun playCheeseSound() {
         if (mp4?.isPlaying == false) {
             mp4?.start()
@@ -234,11 +253,9 @@ class GameActivity(private val context: Context) {
         mp5?.start()
     }
 
-
     @OptIn(DelicateCoroutinesApi::class)
     fun startObstacleGeneration() {
         obstaclegenerationJob?.cancel()
-
         obstaclegenerationJob = GlobalScope.launch(Dispatchers.Default) {
             while (isActive) {
                 delay(obstacleinterval)
@@ -259,17 +276,16 @@ class GameActivity(private val context: Context) {
                 if (!gameover.value) {
                     withContext(Dispatchers.Main) {
                         tomX.value = jerryX.value
-                        tomY.value = when  {
-                            (HP.value>50) -> jerryY.value + lanewidth * 2
-                            (HP.value<=50)-> jerryY.value + lanewidth
-                            else -> jerryY.value
+                        tomY.value = when {
+                            (live.value >= 2) -> jerryY.value + lanewidth * 2
+                            (live.value < 2) -> jerryY.value + lanewidth
+                            else -> jerryY.value + lanewidth * 2
                         }
                     }
                 }
             }
         }
     }
-
 
     fun resetGame() {
         tomfollowingJob?.cancel()
@@ -285,7 +301,7 @@ class GameActivity(private val context: Context) {
         gameover.value = false
         obstacles.clear()
         cheeses.clear()
-        HP.value =100
+        live.value = initialLive
         hascollided.value = false
         bullets.clear()
 
@@ -298,11 +314,10 @@ class GameActivity(private val context: Context) {
     @OptIn(DelicateCoroutinesApi::class)
     fun startCheeseGeneration() {
         cheesegenerationJob?.cancel()
-
         cheesegenerationJob = GlobalScope.launch(Dispatchers.Default) {
             while (isActive) {
                 delay(cheeseinterval)
-                if (!gameover.value ) {
+                if (!gameover.value && live.value < initialLive.absoluteValue) {
                     withContext(Dispatchers.Main) {
                         addCheese()
                     }
@@ -311,16 +326,12 @@ class GameActivity(private val context: Context) {
         }
     }
 
-
-
     fun shootBullet() {
         if (!gameover.value && bulletcount.value > 0) {
             bullets.add(Bullet(jerryX.value, jerryY.value))
             bulletcount.value--
             playShootSound()
-            HP.value-=25
         }
-
     }
 
     fun addObstacle() {
@@ -335,7 +346,7 @@ class GameActivity(private val context: Context) {
     }
 
     fun addCheese() {
-        if (!gameover.value) {
+        if (!gameover.value && live.value < initialLive.absoluteValue) {
             val lane = random.nextInt(lanes)
             val newY = -lanewidth
 
@@ -369,11 +380,9 @@ class GameActivity(private val context: Context) {
         return false
     }
 
-
     @OptIn(DelicateCoroutinesApi::class)
     fun startCoinGeneration() {
         coingenerationJob?.cancel()
-
         coingenerationJob = GlobalScope.launch(Dispatchers.Default) {
             while (isActive) {
                 delay(coininterval)

@@ -121,7 +121,7 @@ fun GameDesign(gameState: GameActivity) {
         }
         Box(modifier = Modifier.fillMaxSize()) {
             Text(
-                text = "HP: ${gameState.HP.value}",
+                text = "Lives: ${gameState.live.value}",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
