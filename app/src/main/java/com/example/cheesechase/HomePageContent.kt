@@ -138,7 +138,7 @@ fun HomePageContent(navController: NavController) {
                 Text(text = "Game Rules")
             },
             text = {
-                Text("1. Avoid obstacles as they reduce your HP by 50.\n2.Number of lives you have per match is random and will vary from 2 to 5.\n3. Tom gets close to you if your life goes below 3.\n4. Collecting cheese gives you cheese bullets to shoot down obstacles and heals you till you reach the inital number lives you had.\n5.Collecting coins increases your score by 1000")
+                Text("1. Avoid obstacles as they reduce your life by 1.\n2.Number of lives you have per match is random and will vary from 2 to 5.\n3. Tom gets close to you if your life goes below 3.\n4. Collecting cheese gives you cheese bullets to shoot down obstacles and heals you till you reach the inital number lives you had.\n5.Collecting coins increases your score by 1000")
             }
         )
     }
