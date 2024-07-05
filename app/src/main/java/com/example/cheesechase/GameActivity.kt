@@ -81,7 +81,6 @@ class GameActivity(private val context: Context) {
     private val cheeseinterval = 5000L
     private val coininterval = 2000L
     private val lanewidth = getScreenWidth(context) / 3
-
     var tomfollowingJob: Job? = null
     var obstaclegenerationJob: Job? = null
     var coingenerationJob: Job? = null
