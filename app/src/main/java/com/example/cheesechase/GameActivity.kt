@@ -47,6 +47,7 @@ class GameActivity(private val context: Context) {
     private var mp3: MediaPlayer? = null
     private var mp4: MediaPlayer? = null
     private var mp5: MediaPlayer? = null
+    private var mp6: MediaPlayer? = null
 
     init {
         mp1 = MediaPlayer.create(context, R.raw.buzz)
@@ -54,6 +55,7 @@ class GameActivity(private val context: Context) {
         mp3 = MediaPlayer.create(context, R.raw.game)
         mp4 = MediaPlayer.create(context, R.raw.coin)
         mp5 = MediaPlayer.create(context, R.raw.shoot)
+        mp6 = MediaPlayer.create(context, R.raw.oof)
     }
 
     val jerryX = mutableStateOf(1)
@@ -143,7 +145,7 @@ class GameActivity(private val context: Context) {
                         live.value -= 1
                         obstacles.removeAt(i)
                         hascollided.value = true
-                        playBuzzSound()
+                        playOofSound()
 
                         if (live.value == 0) {
                             playOverSound()
@@ -251,6 +253,10 @@ class GameActivity(private val context: Context) {
 
     private fun playShootSound() {
         mp5?.start()
+    }
+
+    private fun playOofSound() {
+        mp6?.start()
     }
 
     @OptIn(DelicateCoroutinesApi::class)
