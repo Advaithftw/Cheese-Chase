@@ -1,9 +1,11 @@
 package com.example.cheesechase
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,10 +34,13 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun HomePageContent(navController: NavController) {
@@ -106,22 +111,60 @@ fun HomePageContent(navController: NavController) {
             Text(
                 text = "High Score: $highScore",
                 style = MaterialTheme.typography.headlineMedium.copy(
-                    color = Color.Black,
+                    color = Color(0xFFffffff),
                     fontWeight = FontWeight.Bold
                 ),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(modifier = Modifier.height(150.dp))
 
             Button(
                 onClick = { navController.navigate("game") },
                 shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(Color.Blue),
-                modifier = Modifier.height(35.dp).width(130.dp)
+                colors = ButtonDefaults.buttonColors(
+                    Color(0xFF3A9FF1),
+                    contentColor = Color.White
+                ),
+                modifier = Modifier
+                    .height(50.dp)
+                    .width(160.dp)
+                    .padding(8.dp)
+                    .shadow(8.dp, RoundedCornerShape(50))
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(Color(0xFF3A9FF1), Color(0xFF3369E8)),
+                            start = Offset(0f, 0f),
+                            end = Offset(0f, 100f)
+                        )
+                    ),
+                contentPadding = PaddingValues(0.dp) // Remove default padding
             ) {
-                Text(text = "Start Game", color = Color.White, modifier = Modifier.fillMaxSize())
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(Color(0xFF3A9FF1), Color(0xFF3369E8)),
+                                start = Offset(0f, 0f),
+                                end = Offset(0f, 100f)
+                            ),
+                            shape = RoundedCornerShape(50)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 8.dp) // Add custom padding
+                ) {
+                    Text(
+                        text = "Start Game",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        modifier = Modifier.fillMaxSize(),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
+
         }
     }
 
